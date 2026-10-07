@@ -1,0 +1,338 @@
+.project-box-wrapper {
+  width: 100%;
+
+  /* Clear space after the hero (which ends with its separator): 56-72px */
+  padding:
+    calc(var(--section-breath) + 0.5rem)
+    var(--page-gutter)
+    clamp(1.5rem, 3vw, 2.5rem);
+
+  display: flex;
+  justify-content: center;
+
+  position: relative;
+  z-index: 5;
+}
+
+.project-section-inner {
+  width: 100%;
+  max-width: var(--container-content);
+}
+
+.project-intro {
+  margin-bottom: clamp(1.5rem, 2.5vw, 2rem);
+
+  text-align: center;
+}
+
+.project-eyebrow {
+  display: inline-block;
+
+  color: var(--accent);
+
+  font-size: var(--text-label);
+  font-weight: var(--weight-semibold);
+  line-height: 1.4;
+
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.project-intro h2 {
+  margin:
+    var(--gap-label-heading)
+    0
+    var(--gap-heading-body);
+
+  color: var(--text-primary);
+
+  font-size: var(--text-subsection);
+  font-weight: var(--weight-medium);
+
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-heading);
+}
+
+.project-intro p {
+  max-width: 36rem;
+
+  margin: 0 auto;
+
+  color: var(--text-secondary);
+
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+}
+
+.project-box {
+  width: 100%;
+
+  padding: 0;
+
+  position: relative;
+
+  overflow: hidden;
+
+  border: 1px solid var(--border);
+  border-radius: 22px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.028),
+      rgba(255, 255, 255, 0.012)
+    ),
+    var(--bg-elevated);
+
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.025);
+
+  transition:
+    border-color 0.25s ease,
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+/* Analyzing keeps the focused look, so the border does not drop back
+   when the Evaluate button (which held focus) is hidden */
+.project-box:focus-within,
+.project-box.is-analyzing {
+  border-color: var(--border-accent);
+
+  box-shadow:
+    0 34px 100px rgba(0, 0, 0, 0.42),
+    0 0 0 1px rgba(217, 160, 127, 0.035),
+    0 0 70px rgba(217, 160, 127, 0.04);
+}
+
+/* Input and progress share one grid cell: the card is always sized to
+   the taller of the two, in both states */
+.project-box-stack {
+  display: grid;
+}
+
+.project-box-input,
+.project-box-progress {
+  grid-area: 1 / 1;
+
+  min-width: 0;
+}
+
+.project-box-progress {
+  padding: 20px 24px;
+
+  display: flex;
+  align-items: center;
+
+  visibility: hidden;
+}
+
+.project-box.is-analyzing .project-box-input {
+  visibility: hidden;
+}
+
+.project-box.is-analyzing .project-box-progress {
+  visibility: visible;
+}
+
+/* The divider above the Evaluate button belongs to the input view */
+.project-box.is-analyzing::after {
+  opacity: 0;
+}
+
+.project-box label {
+  display: block;
+
+  padding:
+    20px
+    24px
+    0;
+
+  color: var(--text-secondary);
+
+  font-size: 12px;
+  font-weight: 500;
+
+  letter-spacing: 0.02em;
+}
+
+.project-textarea-wrapper {
+  position: relative;
+}
+
+.project-box textarea {
+  width: 100%;
+  min-height: 150px;
+
+  padding:
+    16px
+    24px
+    56px;
+
+  border: 0;
+  outline: none;
+
+  resize: none;
+
+  color: var(--text-primary);
+  background: transparent;
+
+  font-size: 15px;
+  line-height: 1.8;
+
+  caret-color: var(--accent);
+}
+
+.project-box textarea::placeholder {
+  color: var(--text-muted);
+
+  opacity: 0.85;
+}
+
+.character-count {
+  position: absolute;
+
+  right: 24px;
+  bottom: 18px;
+
+  color: var(--text-muted);
+
+  font-size: 11px;
+}
+
+.evaluate-button {
+  width: auto;
+
+  margin:
+    0
+    18px
+    18px
+    auto;
+
+  padding:
+    12px
+    18px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  border: 1px solid transparent;
+  border-radius: 12px;
+
+  color: var(--button-text);
+  background: var(--accent);
+
+  font-size: 13px;
+  font-weight: var(--weight-semibold);
+
+  box-shadow:
+    0 8px 28px rgba(217, 160, 127, 0.12);
+
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.evaluate-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+
+  background: var(--accent-hover);
+
+  box-shadow:
+    0 12px 34px rgba(217, 160, 127, 0.18);
+}
+
+.evaluate-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.evaluate-button:disabled {
+  opacity: 0.3;
+}
+
+.project-error {
+  margin:
+    -6px
+    20px
+    18px;
+
+  color: var(--error);
+
+  font-size: 12px;
+}
+
+.project-box::after {
+  content: "";
+
+  position: absolute;
+
+  left: 24px;
+  right: 24px;
+  bottom: 62px;
+
+  height: 1px;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      var(--border),
+      transparent
+    );
+
+  pointer-events: none;
+}
+
+@media (max-width: 640px) {
+  .project-intro {
+    margin-bottom: var(--space-5);
+  }
+
+  .project-box {
+    border-radius: 18px;
+  }
+
+  .project-box label {
+    padding:
+      18px
+      18px
+      0;
+  }
+
+  .project-box-progress {
+    padding: 18px;
+  }
+
+  .project-box textarea {
+    min-height: 140px;
+
+    padding:
+      14px
+      18px
+      54px;
+  }
+
+  .character-count {
+    right: 18px;
+  }
+
+  .evaluate-button {
+    margin:
+      0
+      14px
+      14px
+      auto;
+  }
+
+  .project-box::after {
+    left: 18px;
+    right: 18px;
+    bottom: 58px;
+  }
+}

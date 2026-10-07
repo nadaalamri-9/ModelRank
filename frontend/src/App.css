@@ -1,0 +1,51 @@
+.app {
+  min-height: 100vh;
+
+  color: var(--text-primary);
+
+  /* The page background lives on body (--page-background) only */
+  background: transparent;
+}
+
+
+/* Dynamic sections */
+
+.project-box-wrapper,
+.results-section {
+  animation: section-fade-in 0.35s ease both;
+}
+
+
+@keyframes section-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+/* Shared interaction */
+
+.app button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.app button:focus-visible,
+.app a:focus-visible {
+  outline: 2px solid var(--text-primary);
+  outline-offset: 3px;
+}
+
+
+/* Mobile */
+
+@media (max-width: 640px) {
+  .app {
+    overflow-x: hidden;
+  }
+}

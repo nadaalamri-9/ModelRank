@@ -1,0 +1,268 @@
+@import "@fontsource/geist-sans/400.css";
+@import "@fontsource/geist-sans/500.css";
+@import "@fontsource/geist-sans/600.css";
+
+:root {
+  font-family: var(--font-ui);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+
+  /* Typography */
+
+  --font-ui: "Geist Sans", Arial, sans-serif;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-md: 16px;
+  --font-size-lg: 20px;
+
+  /* Shared type scale */
+  --text-hero: clamp(4rem, 7vw, 6.25rem);
+  --text-section: clamp(2rem, 3.2vw, 2.8rem);
+  --text-subsection: clamp(1.75rem, 2.6vw, 2.3rem);
+  --text-step-title: clamp(1.2rem, 1.8vw, 1.55rem);
+  --text-lead: clamp(1rem, 1.5vw, 1.2rem);
+  --text-body: clamp(0.95rem, 1.2vw, 1.05rem);
+  --text-label: 0.75rem;
+
+  --leading-display: 0.94;
+  --leading-heading: 1.08;
+  --leading-title: 1.2;
+  --leading-body: 1.65;
+
+  --tracking-display: -0.045em;
+  --tracking-heading: -0.035em;
+  --tracking-title: -0.025em;
+  --tracking-label: 0.2em;
+
+  /* Shared heading rhythm */
+  --gap-label-heading: 0.875rem;
+  --gap-heading-body: 1rem;
+
+  --line-height-tight: 1.02;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.7;
+
+
+  /* Spacing */
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+  --space-9: 48px;
+  --space-10: 64px;
+  --space-11: 80px;
+  --space-12: 96px;
+
+
+  /* Layout */
+
+  --container-site: 75rem;
+  --container-content: 68.75rem;
+  --page-gutter: clamp(1rem, 3vw, 2rem);
+
+  --section-pad: clamp(2.5rem, 4vw, 3.5rem);
+  --section-pad-lg: clamp(3.5rem, 6vw, 5rem);
+
+  /* Hero to evaluation transition */
+  --hero-separator-drop: calc(clamp(1.75rem, 3vw, 2.5rem) * 0.75);
+  --section-breath: clamp(3rem, 4.5vw, 4rem);
+
+
+  /* Radius */
+
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-pill: 999px;
+
+
+  /* Main Theme */
+
+  --bg-primary: #0a0909;
+
+  /* The one page background, used unchanged in every app state. Glows
+     have fixed sizes and positions so page height never affects them. */
+  --page-background:
+    radial-gradient(
+      circle 38rem at 50% 0,
+      var(--glow-bright),
+      transparent
+    ),
+    radial-gradient(
+      circle 47rem at 50% -11rem,
+      rgba(217, 160, 127, 0.06),
+      transparent
+    ),
+    var(--bg-primary);
+  --bg-secondary: #100f0e;
+  --bg-elevated: #141210;
+
+  --surface: rgba(255, 255, 255, 0.03);
+  --surface-secondary: rgba(255, 255, 255, 0.018);
+  --surface-hover: rgba(255, 255, 255, 0.055);
+  --surface-strong: rgba(18, 16, 15, 0.9);
+
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+
+  --text-primary: #f3efe9;
+  --text-secondary: #aaa39b;
+  --text-muted: #6f6963;
+
+  --accent: #d9a07f;
+  --accent-hover: #e0aa8a;
+
+  --accent-soft: rgba(217, 160, 127, 0.1);
+  --accent-soft-strong: rgba(217, 160, 127, 0.16);
+
+  --accent-glow: rgba(217, 160, 127, 0.18);
+  --accent-glow-strong: rgba(217, 160, 127, 0.26);
+
+  --border-accent: rgba(217, 160, 127, 0.28);
+
+  --button-bg: #d9a07f;
+  --button-text: #15110f;
+
+  --focus-ring: rgba(217, 160, 127, 0.12);
+
+  --glow-bright: rgba(217, 160, 127, 0.13);
+  --glow-border: rgba(217, 160, 127, 0.08);
+
+  --shadow-panel:
+    0 28px 80px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.025);
+
+
+  /* Status */
+
+  --pass-text: #c9dfc3;
+  --pass-bg: rgba(91, 137, 82, 0.1);
+  --pass-border: rgba(127, 174, 118, 0.2);
+
+  --partial-text: #e4d2a6;
+  --partial-bg: rgba(180, 143, 73, 0.1);
+  --partial-border: rgba(204, 167, 92, 0.2);
+
+  --fail-text: #deb2aa;
+  --fail-bg: rgba(160, 80, 70, 0.1);
+  --fail-border: rgba(190, 105, 95, 0.2);
+
+  --error: #d8897f;
+
+  color: var(--text-primary);
+  background: var(--bg-primary);
+}
+
+
+@media (max-width: 480px) {
+  :root {
+    --text-hero: clamp(2.4rem, 11vw, 3.2rem);
+  }
+}
+
+
+/* Reset */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+
+  font-family: var(--font-ui);
+
+  color: var(--text-primary);
+
+  background: var(--page-background);
+}
+
+body,
+button,
+textarea,
+input {
+  font-family: inherit;
+}
+
+button,
+textarea,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+a {
+  color: inherit;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+textarea {
+  resize: vertical;
+}
+
+::selection {
+  color: var(--button-text);
+  background: var(--accent);
+}
+
+
+/* Scrollbar */
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  border: 3px solid var(--bg-primary);
+  border-radius: var(--radius-pill);
+
+  background: rgba(217, 160, 127, 0.24);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(217, 160, 127, 0.36);
+}

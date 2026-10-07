@@ -1,0 +1,181 @@
+.hero {
+  position: relative;
+
+  width: 100%;
+  padding:
+    clamp(2.5rem, 5vw, 4rem)
+    var(--page-gutter)
+    clamp(4.75rem, 8vw, 6.25rem);
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  /* Clip sideways only, so the lines can run down into the next gap */
+  overflow-x: clip;
+  overflow-y: visible;
+  isolation: isolate;
+}
+
+.hero-content {
+  width: 100%;
+  max-width: var(--container-site);
+
+  position: relative;
+  z-index: 3;
+
+  text-align: center;
+}
+
+.hero-eyebrow {
+  display: inline-block;
+
+  margin-bottom: clamp(1.5rem, 2.6vw, 2rem);
+
+  color: var(--accent);
+
+  font-size: var(--text-label);
+  font-weight: var(--weight-semibold);
+  line-height: 1.4;
+
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.hero h1 {
+  margin: 0;
+
+  color: var(--text-primary);
+
+  font-size: clamp(3.6rem, 6vw, 5.4rem);
+  font-weight: var(--weight-medium);
+
+  line-height: var(--leading-display);
+  letter-spacing: var(--tracking-display);
+
+  text-wrap: balance;
+}
+
+/* Same face as line one, one step lighter, sitting tight underneath */
+.hero h1 span {
+  display: block;
+
+  color: var(--accent);
+
+  font-size: clamp(2.95rem, 5vw, 4.55rem);
+  font-weight: var(--weight-regular);
+  letter-spacing: -0.04em;
+}
+
+.hero p {
+  max-width: 40rem;
+
+  margin:
+    clamp(1.75rem, 3.4vw, 2.5rem)
+    auto
+    0;
+
+  color: var(--text-secondary);
+
+  font-size: var(--text-lead);
+  line-height: var(--leading-body);
+
+  text-wrap: balance;
+}
+
+
+/* Depth: a faint warm wash behind the headline, too soft to read as
+   a shape */
+.hero::before {
+  content: "";
+
+  position: absolute;
+
+  left: 50%;
+  top: 42%;
+
+  width: min(46rem, 86vw);
+  height: 18rem;
+
+  transform: translate(-50%, -50%);
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      ellipse at center,
+      var(--accent-glow),
+      transparent 70%
+    );
+
+  filter: blur(60px);
+
+  opacity: 0.3;
+
+  z-index: 0;
+
+  pointer-events: none;
+}
+
+
+/* Separator below the hero
+ *
+ * One thin arch, highest at the exact center and sloping down to
+ * both ends, with a fainter supporting arch just below it. Drawn as
+ * an inline SVG so the shape is exact. The band sits in the space
+ * between the end of the hero description and the next section's
+ * eyebrow, overlapping neither.
+ */
+
+.hero-visual {
+  position: absolute;
+
+  left: 50%;
+  /* Sits inside the hero's bottom padding, marking the hero's end */
+  bottom: clamp(0.25rem, 0.5vw, 0.5rem);
+
+  /* About 72% of the content width */
+  width: calc(
+    min(var(--container-site), 100% - var(--page-gutter) * 2) * 0.72
+  );
+  height: clamp(2.25rem, 3.5vw, 3.25rem);
+
+  transform: translateX(-50%);
+
+  z-index: 0;
+
+  pointer-events: none;
+
+  background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 56" preserveAspectRatio="none"%3E%3Cdefs%3E%3ClinearGradient id="f" x1="0" x2="1" y1="0" y2="0"%3E%3Cstop offset="0" stop-color="%23d9a07f" stop-opacity="0"/%3E%3Cstop offset="0.18" stop-color="%23d9a07f"/%3E%3Cstop offset="0.82" stop-color="%23d9a07f"/%3E%3Cstop offset="1" stop-color="%23d9a07f" stop-opacity="0"/%3E%3C/linearGradient%3E%3CradialGradient id="h"%3E%3Cstop offset="0" stop-color="%23d9a07f" stop-opacity="0.3"/%3E%3Cstop offset="1" stop-color="%23d9a07f" stop-opacity="0"/%3E%3C/radialGradient%3E%3C/defs%3E%3Cellipse cx="500" cy="28" rx="70" ry="7" fill="url%28%23h%29"/%3E%3Cg fill="none" stroke="url%28%23f%29" vector-effect="non-scaling-stroke"%3E%3Cpath d="M0 50 Q500 6 1000 50" stroke-opacity="0.4" stroke-width="1.4"/%3E%3Cpath d="M120 55 Q500 19 880 55" stroke-opacity="0.14" stroke-width="1"/%3E%3C/g%3E%3C/svg%3E') center / 100% 100% no-repeat;
+}
+
+@media (max-width: 700px) {
+  .hero {
+    padding-top: 2rem;
+    padding-bottom: 4.5rem;
+  }
+
+  .hero h1 {
+    max-width: 36rem;
+    margin-inline: auto;
+  }
+
+  .hero p {
+    max-width: 34rem;
+  }
+}
+
+
+@media (max-width: 480px) {
+  .hero h1 {
+    font-size: clamp(2.4rem, 11vw, 3.2rem);
+  }
+
+  .hero h1 span {
+    font-size: clamp(2rem, 9.3vw, 2.7rem);
+  }
+
+  .hero p {
+    max-width: 22rem;
+  }
+}

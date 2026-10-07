@@ -1,0 +1,284 @@
+.how-it-works {
+  width: min(
+    var(--container-site),
+    100% - var(--page-gutter) * 2
+  );
+  margin: 0 auto;
+
+  padding:
+    var(--section-pad)
+    0
+    var(--section-pad-lg);
+}
+
+.how-it-works-heading {
+  max-width: 52rem;
+
+  margin:
+    0
+    auto
+    clamp(3rem, 5vw, 4rem);
+
+  text-align: center;
+}
+
+.how-it-works-eyebrow {
+  display: inline-block;
+
+  color: var(--accent);
+
+  font-size: var(--text-label);
+  font-weight: var(--weight-semibold);
+  line-height: 1.4;
+
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.how-it-works-heading h2 {
+  margin:
+    var(--gap-label-heading)
+    auto
+    var(--gap-heading-body);
+
+  color: var(--text-primary);
+
+  font-size: var(--text-section);
+  font-weight: var(--weight-medium);
+
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-heading);
+
+  text-wrap: balance;
+}
+
+.how-it-works-heading p {
+  max-width: 36rem;
+
+  margin: 0 auto;
+
+  color: var(--text-secondary);
+
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+
+  text-wrap: balance;
+}
+
+
+/* Steps */
+
+.how-it-works-grid {
+  --number-height: 0.6875rem;
+  --number-gap: 0.625rem;
+  --icon-size: 2.75rem;
+
+  position: relative;
+
+  display: grid;
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+
+  /* No column gap, so each icon center sits at 12.5% / 37.5% / ... */
+  gap: 0;
+}
+
+/* Joins the first and last icon centers */
+.how-it-works-grid::before {
+  content: "";
+
+  position: absolute;
+
+  top: calc(
+    var(--number-height) +
+    var(--number-gap) +
+    var(--icon-size) / 2
+  );
+  left: 12.5%;
+  right: 12.5%;
+
+  height: 1px;
+
+  background: var(--border-accent);
+
+  opacity: 0.55;
+}
+
+.how-it-works-step {
+  min-width: 0;
+
+  padding: 0 clamp(0.75rem, 2vw, 1.5rem);
+
+  position: relative;
+  z-index: 1;
+
+  text-align: center;
+}
+
+.how-step-marker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.how-step-number {
+  margin-bottom: var(--number-gap);
+
+  color: var(--text-muted);
+
+  font-size: var(--number-height);
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+
+  letter-spacing: 0.16em;
+}
+
+.how-step-icon {
+  width: var(--icon-size);
+  height: var(--icon-size);
+
+  display: grid;
+  place-items: center;
+
+  border: 1px solid var(--border-accent);
+  border-radius: 50%;
+
+  color: var(--accent);
+
+  background:
+    radial-gradient(
+      circle at center,
+      rgba(217, 160, 127, 0.08),
+      rgba(217, 160, 127, 0.02) 65%,
+      transparent 100%
+    ),
+    var(--bg-primary);
+
+  box-shadow:
+    0 0 0 0.375rem var(--bg-primary);
+}
+
+.how-step-content {
+  max-width: 16rem;
+
+  margin: 1.25rem auto 0;
+}
+
+.how-it-works-step h3 {
+  margin: 0;
+
+  color: var(--text-primary);
+
+  font-size: var(--text-step-title);
+  font-weight: var(--weight-medium);
+
+  line-height: var(--leading-title);
+  letter-spacing: var(--tracking-title);
+}
+
+.how-it-works-step p {
+  margin: 0.625rem 0 0;
+
+  color: var(--text-secondary);
+
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+
+  text-wrap: balance;
+}
+
+
+@media (max-width: 820px) {
+  .how-it-works-grid {
+    --step-gap: 2.75rem;
+    --number-offset: 1.25rem;
+
+    width: min(36rem, 100%);
+    margin: 0 auto;
+
+    /* Room for the first number, which sits above its icon */
+    padding-top: var(--number-offset);
+
+    grid-template-columns: 1fr;
+    gap: var(--step-gap);
+  }
+
+  .how-it-works-grid::before {
+    display: none;
+  }
+
+  .how-it-works-step {
+    padding: 0;
+
+    display: grid;
+    grid-template-columns:
+      var(--icon-size)
+      minmax(0, 1fr);
+    gap: 1.25rem;
+    align-items: start;
+
+    text-align: left;
+  }
+
+  .how-step-marker {
+    position: relative;
+  }
+
+  .how-step-number {
+    position: absolute;
+
+    top: calc(var(--number-offset) * -1);
+    left: 50%;
+
+    margin: 0;
+
+    transform: translateX(-50%);
+  }
+
+  .how-step-content {
+    max-width: none;
+
+    margin: 0.125rem 0 0;
+  }
+
+  .how-it-works-step p {
+    max-width: 29rem;
+
+    text-wrap: pretty;
+  }
+
+  /* Segment from this icon down to just above the next step's number */
+  .how-it-works-step:not(:last-child)::after {
+    content: "";
+
+    position: absolute;
+
+    left: calc(var(--icon-size) / 2);
+    top: calc(var(--icon-size) + 0.5rem);
+    bottom: calc(
+      (var(--step-gap) - var(--number-offset) - 0.5rem) * -1
+    );
+
+    width: 1px;
+
+    background: var(--border-accent);
+
+    opacity: 0.55;
+  }
+}
+
+
+@media (max-width: 600px) {
+  .how-it-works-heading {
+    margin-bottom: 2.5rem;
+  }
+
+  .how-it-works-grid {
+    --icon-size: 2.5rem;
+  }
+
+  .how-it-works-step {
+    gap: 1rem;
+  }
+
+}

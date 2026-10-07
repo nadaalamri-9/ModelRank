@@ -1,0 +1,254 @@
+/* Inner content of the ProjectBox card while analyzing. The card,
+   its size and its padding come from ProjectBox.css. */
+.analysis-progress {
+  width: 100%;
+}
+
+
+/* Header */
+
+.analysis-progress-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  color: var(--accent);
+
+  font-size: var(--text-label);
+  font-weight: var(--weight-semibold);
+  line-height: 1.4;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.analysis-spinner {
+  animation: analysis-spin 1.4s linear infinite;
+}
+
+.analysis-progress-copy-stack {
+  display: grid;
+}
+
+.analysis-progress-copy {
+  grid-area: 1 / 1;
+
+  visibility: hidden;
+}
+
+/* inherit, not visible: an explicit "visible" would override the hidden
+   progress layer in the idle state and show through the input */
+.analysis-progress-copy.is-active {
+  visibility: inherit;
+
+  animation: analysis-copy-in 0.35s ease both;
+}
+
+.analysis-progress-copy h2 {
+  margin:
+    var(--gap-label-heading)
+    0
+    0.5rem;
+
+  color: var(--text-primary);
+
+  font-size: var(--text-step-title);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-title);
+  letter-spacing: var(--tracking-title);
+}
+
+.analysis-progress-copy p {
+  margin: 0;
+
+  color: var(--text-secondary);
+
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+}
+
+
+/* Progress bar */
+
+.analysis-progress-track {
+  --marker-size: 9px;
+
+  position: relative;
+
+  height: 2px;
+
+  margin-top: clamp(1.5rem, 3vw, 2rem);
+
+  border-radius: var(--radius-pill);
+
+  background: var(--border);
+}
+
+.analysis-progress-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+
+  border-radius: inherit;
+
+  background: var(--accent);
+
+  opacity: 0.85;
+
+  transition-property: width;
+}
+
+.analysis-progress-marker {
+  position: absolute;
+  top: 50%;
+
+  width: var(--marker-size);
+  height: var(--marker-size);
+
+  transform: translate(-50%, -50%);
+
+  border-radius: 50%;
+
+  background: var(--accent);
+
+  box-shadow:
+    0 0 0 3px var(--bg-elevated),
+    0 0 10px var(--accent-glow);
+
+  transition-property: left;
+}
+
+
+/* Stage labels: one row under the bar, each centered on its stage */
+
+.analysis-progress-stages {
+  margin: 0.875rem 0 0;
+  padding: 0;
+
+  list-style: none;
+
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.analysis-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4375rem;
+
+  color: var(--text-muted);
+
+  font-size: 0.8125rem;
+  font-weight: var(--weight-regular);
+  line-height: 1;
+
+  transition: color 0.3s ease;
+}
+
+.analysis-stage-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+
+  display: grid;
+  place-items: center;
+
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+
+  transition:
+    border-color 0.3s ease,
+    background-color 0.3s ease;
+}
+
+.analysis-stage-completed {
+  color: var(--text-primary);
+
+  font-weight: var(--weight-medium);
+}
+
+.analysis-stage-completed .analysis-stage-icon {
+  border-color: var(--border-accent);
+
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.analysis-stage-active {
+  color: var(--accent);
+
+  font-weight: var(--weight-medium);
+}
+
+.analysis-stage-active .analysis-stage-icon {
+  border-color: var(--accent);
+
+  animation: analysis-stage-pulse 1.8s ease-in-out infinite;
+}
+
+/* Inner dot of the active marker */
+.analysis-stage-active .analysis-stage-icon::before {
+  content: "";
+
+  width: 4px;
+  height: 4px;
+
+  border-radius: 50%;
+
+  background: var(--accent);
+}
+
+
+@keyframes analysis-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes analysis-copy-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* A soft breathing ring, not a flash */
+@keyframes analysis-stage-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 var(--accent-soft);
+  }
+
+  50% {
+    box-shadow: 0 0 0 4px var(--accent-soft);
+  }
+}
+
+
+@media (max-width: 520px) {
+  .analysis-stage {
+    flex-direction: column;
+    gap: 0.375rem;
+
+    font-size: 0.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .analysis-spinner,
+  .analysis-progress-copy.is-active,
+  .analysis-stage-active .analysis-stage-icon {
+    animation: none;
+  }
+
+  .analysis-progress-fill,
+  .analysis-progress-marker {
+    transition-duration: 0ms !important;
+  }
+}
