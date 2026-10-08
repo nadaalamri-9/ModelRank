@@ -18,7 +18,7 @@ by [**SDAIA Academy**](https://github.com/SDAIAAcademy)
 
 Want to explore the agents without navigating the full application?
 
-The notebook provides a standalone, simplified implementation of the agents, tools, prompts, and LangGraph orchestration in one place.
+The notebook provides a standalone, simplified implementation of the agents, tools, prompts, structured output validation, and LangGraph orchestration in one place.
 
 ---
 
@@ -46,6 +46,8 @@ ModelRank uses four specialized agents orchestrated with **LangGraph**.
 
 ![ModelRank LangGraph Workflow](./app/frontend/public/modelrank-workflow.svg)
 
+LangGraph orchestrates the agents through conditional routing, with a single retry when necessary. The Runner executes candidate models in parallel, while Pydantic validates intermediate data and agent tool inputs.
+
 ### Background Evaluations
 
 Evaluations run as isolated background jobs, allowing the frontend to track progress without blocking requests. Each evaluation maintains its own results and PDF report.
@@ -55,7 +57,7 @@ Evaluations run as isolated background jobs, allowing the frontend to track prog
 | Layer | Technologies |
 |---|---|
 | AI & Orchestration | LangChain, LangGraph, OpenRouter, Tavily |
-| Backend | Python, FastAPI, ReportLab |
+| Backend | Python, FastAPI, Pydantic, ReportLab |
 | Frontend | React, Vite, JavaScript |
 | Deployment | Docker, AWS Elastic Beanstalk, CloudFront, AWS Amplify |
 
