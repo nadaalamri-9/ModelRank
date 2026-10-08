@@ -136,6 +136,10 @@
   gap: var(--space-6);
 }
 
+.best-match-title {
+  min-width: 0;
+}
+
 .best-match-rank {
   display: inline-flex;
   align-items: center;
@@ -158,6 +162,7 @@
   font-weight: var(--weight-medium);
   line-height: var(--leading-heading);
   letter-spacing: var(--tracking-heading);
+  overflow-wrap: anywhere;
 }
 
 .best-match-provider {
@@ -386,10 +391,13 @@
 }
 
 .details-name strong {
+  min-width: 0;
+
   color: var(--text-primary);
 
   font-size: var(--font-size-sm);
   font-weight: var(--weight-medium);
+  overflow-wrap: anywhere;
 }
 
 .details-name span,
@@ -440,6 +448,9 @@
 
 .details-model-id {
   display: inline-block;
+  max-width: 100%;
+
+  overflow-wrap: anywhere;
 
   color: var(--text-muted);
 
@@ -468,12 +479,25 @@
 
   font-size: var(--font-size-sm);
   line-height: var(--leading-body);
+  overflow-wrap: anywhere;
 }
 
-/* One compact row per test case */
+/* One compact row per test case. The list owns the column tracks and
+   each row is a subgrid, so the ID and verdict columns size to their
+   longest entry (IDs capped, then wrapped) and stay aligned across rows. */
 .test-list {
+  --test-columns:
+    fit-content(9rem)
+    minmax(0, 1fr)
+    max-content
+    minmax(0, 1.6fr);
+
   margin: var(--space-4) 0 0;
   padding: 0;
+
+  display: grid;
+  grid-template-columns: var(--test-columns);
+  column-gap: var(--space-4);
 
   list-style: none;
 
@@ -481,36 +505,51 @@
 }
 
 .test-row {
+  grid-column: 1 / -1;
+
   padding: 0.625rem 0;
 
   display: grid;
-  grid-template-columns: 3rem minmax(0, 1fr) 4.5rem minmax(0, 1.6fr);
+  /* Fallback for browsers without subgrid: same tracks, per row */
+  grid-template-columns: 6rem minmax(0, 1fr) max-content minmax(0, 1.6fr);
+  grid-template-columns: subgrid;
   align-items: center;
-  gap: var(--space-4);
+  gap: 0.375rem var(--space-4);
 
   border-bottom: 1px solid var(--border);
 }
 
 .test-id {
+  min-width: 0;
+
   color: var(--text-muted);
 
   font-size: var(--font-size-xs);
   font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 .test-criterion {
+  min-width: 0;
+
   color: var(--text-primary);
 
   font-size: var(--font-size-xs);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
 .verdict {
+  justify-self: center;
+
   padding: 0.25rem 0.5rem;
 
   border-radius: var(--radius-pill);
 
   text-align: center;
   text-transform: uppercase;
+  white-space: nowrap;
 
   font-size: 0.625rem;
   font-weight: var(--weight-semibold);
@@ -537,6 +576,7 @@
 
 /* Clamped to two lines; tap or click to show the full reason */
 .test-reason {
+  min-width: 0;
   margin: 0;
   padding: 0;
 
@@ -548,6 +588,7 @@
   font-size: var(--font-size-xs);
   line-height: 1.5;
   text-align: left;
+  overflow-wrap: anywhere;
 
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -570,6 +611,25 @@
   line-clamp: none;
 }
 
+
+/* Tablet: the reason moves under the criterion */
+@media (max-width: 960px) {
+  .test-list {
+    --test-columns:
+      fit-content(8rem)
+      minmax(0, 1fr)
+      max-content;
+  }
+
+  .test-row {
+    grid-template-columns: 6rem minmax(0, 1fr) max-content;
+    grid-template-columns: subgrid;
+  }
+
+  .test-reason {
+    grid-column: 2 / -1;
+  }
+}
 
 @media (max-width: 760px) {
   .best-match-main {
@@ -594,13 +654,39 @@
     gap: var(--space-4);
   }
 
+}
+
+/* Phone: ID and verdict share the top line; criterion and reason
+   get the full width below */
+@media (max-width: 560px) {
+  .test-list {
+    display: block;
+  }
+
   .test-row {
-    grid-template-columns: 2.75rem minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) max-content;
+    grid-template-areas:
+      "id verdict"
+      "criterion criterion"
+      "reason reason";
     gap: 0.375rem var(--space-3);
   }
 
+  .test-id {
+    grid-area: id;
+  }
+
+  .verdict {
+    grid-area: verdict;
+    justify-self: end;
+  }
+
+  .test-criterion {
+    grid-area: criterion;
+  }
+
   .test-reason {
-    grid-column: 2 / -1;
+    grid-area: reason;
   }
 }
 
