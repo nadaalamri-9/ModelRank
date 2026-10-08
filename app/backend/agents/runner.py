@@ -12,6 +12,7 @@ from langchain.tools import tool
 from langchain.agents import create_agent
 
 from backend.config import model
+from backend.schemas import BenchmarkDocument, EvaluationPlan, RunnerResults
 
 
 # Runner Agent - Tools
@@ -22,16 +23,16 @@ DATA_DIR.mkdir(exist_ok=True)
 
 @tool
 def load_runner_inputs() -> str:
-    """Load the evaluation plan and benchmark."""
+    """Load and validate the evaluation plan and benchmark."""
 
-    evaluation_plan_path = DATA_DIR / "evaluation_plan.json"
-    benchmark_path = DATA_DIR / "benchmark.json"
-
-    with open(evaluation_plan_path, "r", encoding="utf-8") as file:
+    with open(DATA_DIR / "evaluation_plan.json", "r", encoding="utf-8") as file:
         plan = json.load(file)
 
-    with open(benchmark_path, "r", encoding="utf-8") as file:
+    with open(DATA_DIR / "benchmark.json", "r", encoding="utf-8") as file:
         benchmark = json.load(file)
+
+    plan = EvaluationPlan.model_validate(plan).model_dump()
+    benchmark = BenchmarkDocument.model_validate(benchmark).model_dump()
 
     inputs = {
         "evaluation_plan": plan,
@@ -47,8 +48,13 @@ def run_models_parallel(runner_inputs: str) -> str:
 
     inputs = json.loads(runner_inputs)
 
-    plan = inputs["evaluation_plan"]
-    benchmark = inputs["benchmark"]
+    plan = EvaluationPlan.model_validate(
+        inputs["evaluation_plan"]
+    ).model_dump()
+
+    benchmark = BenchmarkDocument.model_validate(
+        inputs["benchmark"]
+    ).model_dump()
 
     candidate_models = plan["candidate_models"]
     test_cases = benchmark["test_cases"]
@@ -65,6 +71,7 @@ def run_models_parallel(runner_inputs: str) -> str:
         model_results = []
 
         for test_case in test_cases:
+
             payload = {
                 "model": model_info["model_id"],
                 "messages": [
@@ -161,25 +168,30 @@ def run_models_parallel(runner_inputs: str) -> str:
         "models": all_results
     }
 
-    return json.dumps(results, ensure_ascii=False)
+    validated_results = RunnerResults.model_validate(results)
+
+    return validated_results.model_dump_json()
 
 
 @tool
 def save_runner_results(results_json: str) -> str:
-    """Calculate model summaries and save the runner results."""
+    """Calculate model summaries and save validated runner results."""
 
-    runner_results = json.loads(results_json)
+    runner_results = RunnerResults.model_validate_json(
+        results_json
+    ).model_dump()
 
-    for model_data in runner_results["models"]:
+    for model in runner_results["models"]:
+
         successful_results = [
             result
-            for result in model_data["results"]
+            for result in model["results"]
             if result["error"] is None
         ]
 
         failed_results = [
             result
-            for result in model_data["results"]
+            for result in model["results"]
             if result["error"] is not None
         ]
 
@@ -206,7 +218,7 @@ def save_runner_results(results_json: str) -> str:
             if result["output_tokens"] is not None
         ]
 
-        model_data["summary"] = {
+        model["summary"] = {
             "average_latency_seconds": (
                 round(sum(latencies) / len(latencies), 3)
                 if latencies
@@ -223,9 +235,7 @@ def save_runner_results(results_json: str) -> str:
             "failed_tests": len(failed_results)
         }
 
-    file_path = DATA_DIR / "runner_results.json"
-
-    with open(file_path, "w", encoding="utf-8") as file:
+    with open(DATA_DIR / "runner_results.json", "w", encoding="utf-8") as file:
         json.dump(
             runner_results,
             file,
@@ -241,62 +251,8 @@ def save_runner_results(results_json: str) -> str:
 RUNNER_PROMPT = """
 You are the Runner Agent in ModelRank.
 
-Your job is to execute the benchmark on all candidate models
+Your task is to execute the benchmark on all candidate models
 and save the runtime results.
-
-First, use the load_runner_inputs tool to load:
-- The evaluation plan
-- The benchmark test cases
-
-Then, pass the output of load_runner_inputs directly to
-the run_models_parallel tool.
-
-Use the run_models_parallel tool to execute all candidate models
-on the same benchmark.
-
-The candidate models must be executed in parallel.
-
-Then, pass the output of run_models_parallel directly to
-the save_runner_results tool.
-
-The save_runner_results tool must calculate the model summaries
-and save the final results to runner_results.json.
-
-The same benchmark must be used for every candidate model.
-
-Do not modify:
-- The candidate models
-- The benchmark test cases
-- The expected behaviors
-- The evaluation criteria
-
-Do not evaluate the quality of model responses.
-Do not decide whether a response passed or failed the expected behavior.
-Do not select the best model.
-Do not rank the models.
-Do not make recommendations.
-
-Your job is only to execute the benchmark and collect runtime data.
-
-For every test case, collect:
-- Test case ID
-- Evaluation criterion
-- Expected behavior
-- Model output
-- Response latency
-- Input token usage
-- Output token usage
-- Total token usage
-- API cost when available
-- Any execution error
-
-For every model, calculate:
-- Average response latency
-- Total API cost
-- Total input tokens
-- Total output tokens
-- Number of successful executions
-- Number of failed executions
 
 Always follow this tool order:
 
@@ -304,13 +260,29 @@ Always follow this tool order:
 2. run_models_parallel
 3. save_runner_results
 
-After save_runner_results completes successfully, respond with exactly:
+Pass the output of each tool directly to the next tool.
+
+Use the same benchmark for every candidate model.
+Models must be executed in parallel.
+
+Do not modify candidate models, test cases,
+expected behaviors, or evaluation criteria.
+
+Collect model responses, latency, token usage,
+API costs when available, and execution errors.
+
+The save_runner_results tool calculates model summaries
+and saves them to runner_results.json.
+
+Do not evaluate response quality, assign PASS or FAIL,
+rank models, or make recommendations.
+Your responsibility is execution and data collection only.
+
+After saving successfully, respond with exactly:
 "Benchmark completed and saved to runner_results.json"
 
-Do not print or summarize the benchmark results.
-Do not explain model performance.
-Do not ask questions.
-Do not suggest or perform any next steps.
+Do not print or summarize results.
+Do not ask questions or suggest additional steps.
 """
 
 

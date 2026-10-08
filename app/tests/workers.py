@@ -34,6 +34,19 @@ def _final_state(user_request: str) -> dict:
     }
 
 
+MODEL = {"name": "Test model", "provider": "Test", "model_id": "test/model"}
+
+TEST_CASES = [
+    {
+        "id": f"tc_0{number}",
+        "criterion": "Accuracy",
+        "prompt": f"Test prompt {number}",
+        "expected_behavior": f"Answers test {number} correctly",
+    }
+    for number in (1, 2, 3)
+]
+
+
 def isolated_agents_worker(job_dir_path: str, user_request: str) -> None:
     """Drive the real agents' file tools inside the job's directory.
 
@@ -52,9 +65,7 @@ def isolated_agents_worker(job_dir_path: str, user_request: str) -> None:
         "project_type": "test",
         "project_goal": "test",
         "evaluation_criteria": ["Accuracy"],
-        "candidate_models": [
-            {"name": f"{user_request} model", "model_id": "test/model"},
-        ],
+        "candidate_models": [MODEL],
     })
     jobs._update_status(job_dir, last_completed_step="planner")
 
@@ -63,7 +74,7 @@ def isolated_agents_worker(job_dir_path: str, user_request: str) -> None:
 
     benchmark.save_benchmark.invoke({
         "project_name": user_request,
-        "test_cases": [{"id": "tc-1", "prompt": "Test prompt"}],
+        "test_cases": TEST_CASES,
     })
     jobs._update_status(job_dir, last_completed_step="benchmark")
 
@@ -77,14 +88,22 @@ def isolated_agents_worker(job_dir_path: str, user_request: str) -> None:
         "results_json": json.dumps({
             "project_name": user_request,
             "models": [{
-                "model_id": "test/model",
-                "results": [{
-                    "error": None,
-                    "latency_seconds": 1.0,
-                    "cost_usd": 0.001,
-                    "input_tokens": 10,
-                    "output_tokens": 20,
-                }],
+                **MODEL,
+                "results": [
+                    {
+                        "test_case_id": case["id"],
+                        "criterion": case["criterion"],
+                        "expected_behavior": case["expected_behavior"],
+                        "output": "Test output",
+                        "latency_seconds": 1.0,
+                        "input_tokens": 10,
+                        "output_tokens": 20,
+                        "total_tokens": 30,
+                        "cost_usd": 0.001,
+                        "error": None,
+                    }
+                    for case in TEST_CASES
+                ],
             }],
         }),
     })
@@ -96,13 +115,24 @@ def isolated_agents_worker(job_dir_path: str, user_request: str) -> None:
     judge.save_final_decision.invoke({
         "selected_model": _final_state(user_request)["selected_model"],
         "model_rankings": [{
+            **MODEL,
             "rank": 1,
-            "name": f"{user_request} model",
-            "provider": "Test",
-            "model_id": "test/model",
-            "passed_tests": 1,
+            "quality_assessment": "Meets the expected behavior",
+            "test_case_assessments": [
+                {
+                    "test_case_id": case["id"],
+                    "criterion": case["criterion"],
+                    "verdict": "pass",
+                    "reason": "Matches the expected behavior",
+                }
+                for case in TEST_CASES
+            ],
+            "passed_tests": 3,
             "partial_tests": 0,
             "failed_tests": 0,
+            "average_latency_seconds": 1.0,
+            "total_cost_usd": 0.003,
+            "reason": "Only candidate",
         }],
         "decision_reason": f"Best fit for {user_request}",
         "retry_required": False,

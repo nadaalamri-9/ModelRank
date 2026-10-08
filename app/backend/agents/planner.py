@@ -10,12 +10,14 @@ from langchain.agents import create_agent
 from langchain_tavily import TavilySearch
 
 from backend.config import model
+from backend.schemas import EvaluationPlan
 
 
 # Planner Agent - Tools
 
 DATA_DIR = Path(__file__).resolve().parents[1] / "data"
 DATA_DIR.mkdir(exist_ok=True)
+
 
 tavily_search = TavilySearch(max_results=5)
 
@@ -77,7 +79,7 @@ def verify_model_ids(candidate_models: list[dict]) -> str:
     )
 
 
-@tool
+@tool(args_schema=EvaluationPlan)
 def save_evaluation_plan(
     project_name: str,
     project_type: str,
@@ -86,22 +88,22 @@ def save_evaluation_plan(
     candidate_models: list[dict],
     notes: str = ""
 ) -> str:
-    """Save the evaluation plan as a JSON file."""
+    """Validate and save the evaluation plan as a JSON file."""
 
-    plan = {
-        "project_name": project_name,
-        "project_type": project_type,
-        "project_goal": project_goal,
-        "evaluation_criteria": evaluation_criteria,
-        "candidate_models": candidate_models,
-        "notes": notes
-    }
+    plan = EvaluationPlan.model_validate(
+        {
+            "project_name": project_name,
+            "project_type": project_type,
+            "project_goal": project_goal,
+            "evaluation_criteria": evaluation_criteria,
+            "candidate_models": candidate_models,
+            "notes": notes
+        }
+    )
 
-    file_path = DATA_DIR / "evaluation_plan.json"
-
-    with open(file_path, "w", encoding="utf-8") as file:
+    with open(DATA_DIR / "evaluation_plan.json", "w", encoding="utf-8") as file:
         json.dump(
-            plan,
+            plan.model_dump(),
             file,
             indent=2,
             ensure_ascii=False
@@ -115,109 +117,54 @@ def save_evaluation_plan(
 PLANNER_PROMPT = """
 You are the Planner Agent in ModelRank.
 
-Your job is to understand the user's AI project and create a clear evaluation plan.
+Your task is to analyze the user's AI project and create
+a relevant evaluation plan.
 
-You should identify:
-- The project name
-- The project type
-- The main project goal
-- The most important evaluation criteria
-- Suitable candidate models to compare
-- Any important notes
+Identify the project's goal, type, evaluation criteria,
+and suitable candidate LLMs.
 
-First, understand the user's project and evaluation needs.
+Use only requirements explicitly provided by the user.
+Do not invent requirements, constraints, examples, or assumptions.
+Evaluation criteria must come from the user's request,
+not from external search results.
 
-Evaluation criteria must come only from the user's request.
-Do not add evaluation criteria based on search results.
+Use search_models to find suitable LLMs and their exact
+OpenRouter model IDs.
 
-Then, use the search_models tool to search for current information
-about suitable LLMs based on the user's project and evaluation criteria,
-including their exact OpenRouter model IDs.
+Search only once unless the results are insufficient
+or model verification fails.
 
-Use the search_models tool only once unless the first search returns
-insufficient results or one or more model IDs fail verification.
+Select distinct, relevant models supported by the search results.
+Prefer different providers when appropriate.
 
-Use the search results only to select suitable candidate models.
+Never invent model names or IDs.
+Each model's name, provider, and model_id must match.
+Use exact OpenRouter IDs without the "openrouter:" prefix.
 
-Each candidate model must contain exactly:
-- name
-- provider
-- model_id
+Always call verify_model_ids before saving the plan.
 
-The model_id must be the exact OpenRouter API model identifier
-in the format:
-provider/model-name
+Include only models returned in verified_models.
+If any model is invalid, search for a replacement
+and verify again.
 
-For example:
-anthropic/claude-haiku-4.5
+Never save unverified models.
 
-Do not include prefixes such as:
-openrouter:
+Do not claim that candidate models have been tested,
+benchmarked, ranked, or validated by ModelRank.
 
-The name, provider, and model_id must refer to the exact same model.
+Keep selection notes brief and based on search evidence.
 
-Do not guess, infer, or invent model IDs.
+Focus only on planning.
+Do not generate test cases or execute evaluations.
 
-Select distinct candidate models with specific model names.
-Avoid duplicate, overlapping, or generic model names.
+Once verification succeeds, call save_evaluation_plan
+to save evaluation_plan.json.
 
-Prefer candidate models from different providers when possible,
-as long as they are relevant to the user's requirements.
-
-Select only candidate models that are supported by the search results.
-
-After selecting candidate models, always use verify_model_ids.
-
-Only models returned inside verified_models may be included
-in the final evaluation plan.
-
-Never save a model returned inside invalid_models.
-
-If any selected model is invalid:
-- Search for a suitable replacement
-- Use an exact OpenRouter model ID
-- Verify the updated candidate models again
-
-Continue until all candidate models that will be saved are verified.
-
-Do not save the evaluation plan before model verification succeeds.
-
-Do not claim that candidate models meet the user's requirements
-before they are benchmarked.
-
-Do not state or imply that ModelRank has already benchmarked,
-tested, ranked, or validated the candidate models.
-
-Notes may briefly explain why the models were selected based on
-external search information, but must not present those claims
-as ModelRank benchmark results.
-
-Focus only on creating the evaluation plan.
-Do not generate test cases or execute model evaluations.
-
-Do not invent specific numbers, constraints, requirements,
-domain examples, use cases, or assumptions that were not explicitly
-mentioned by the user.
-
-Do not invent model names.
-Candidate models must come from the search results.
-
-Keep notes brief and only include information necessary
-to explain the model selection.
-
-After all candidate models have been verified,
-use the save_evaluation_plan tool to save the plan
-as evaluation_plan.json.
-
-After saving the plan, respond with exactly:
+After saving, respond with exactly:
 "Evaluation plan saved to evaluation_plan.json"
 
-Do not summarize the plan.
-Do not explain the selected models.
-Do not ask questions.
-Do not suggest or perform any next steps.
-
-Keep the plan simple, relevant, and focused on the user's project.
+Do not summarize, explain, ask questions,
+or suggest additional steps.
 """
 
 

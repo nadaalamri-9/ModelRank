@@ -7,6 +7,7 @@ from langchain.tools import tool
 from langchain.agents import create_agent
 
 from backend.config import model
+from backend.schemas import FinalDecision, RunnerResults
 
 
 # Judge Agent - Tools
@@ -17,12 +18,12 @@ DATA_DIR.mkdir(exist_ok=True)
 
 @tool
 def load_runner_results() -> str:
-    """Load the benchmark results produced by the Runner Agent."""
+    """Load and validate the benchmark results produced by the Runner Agent."""
 
-    file_path = DATA_DIR / "runner_results.json"
-
-    with open(file_path, "r", encoding="utf-8") as file:
+    with open(DATA_DIR / "runner_results.json", "r", encoding="utf-8") as file:
         results = json.load(file)
+
+    RunnerResults.model_validate(results)
 
     return json.dumps(
         results,
@@ -30,7 +31,7 @@ def load_runner_results() -> str:
     )
 
 
-@tool
+@tool(args_schema=FinalDecision)
 def save_final_decision(
     selected_model: dict | None,
     model_rankings: list[dict],
@@ -38,21 +39,21 @@ def save_final_decision(
     retry_required: bool,
     retry_reason: str = ""
 ) -> str:
-    """Save the Judge Agent's final model selection decision."""
+    """Validate and save the Judge Agent's final model selection decision."""
 
-    decision = {
-        "selected_model": selected_model,
-        "model_rankings": model_rankings,
-        "decision_reason": decision_reason,
-        "retry_required": retry_required,
-        "retry_reason": retry_reason
-    }
+    decision = FinalDecision.model_validate(
+        {
+            "selected_model": selected_model,
+            "model_rankings": model_rankings,
+            "decision_reason": decision_reason,
+            "retry_required": retry_required,
+            "retry_reason": retry_reason
+        }
+    )
 
-    file_path = DATA_DIR / "final_decision.json"
-
-    with open(file_path, "w", encoding="utf-8") as file:
+    with open(DATA_DIR / "final_decision.json", "w", encoding="utf-8") as file:
         json.dump(
-            decision,
+            decision.model_dump(),
             file,
             indent=2,
             ensure_ascii=False
@@ -66,136 +67,70 @@ def save_final_decision(
 JUDGE_PROMPT = """
 You are the Judge Agent in ModelRank.
 
-Your job is to evaluate the benchmark results and select the best model
-for the user's project.
+Your task is to evaluate benchmark results, rank candidate models,
+and recommend the best model for the user's project.
 
-First, use the load_runner_results tool to read the benchmark results.
+First, call load_runner_results.
 
-For every model, evaluate every test case individually.
+Evaluate each model using:
+- Compliance with expected_behavior
+- Factual accuracy and instruction following
+- Response latency and API cost
+- Execution errors
 
-Compare:
-- The model output
-- The expected_behavior
-- The evaluation criterion
-- Any execution error
+Judge only from ModelRank benchmark evidence.
+Do not rely on model or provider reputation.
 
-For each test case, assign exactly one verdict:
+Compare each response directly against its expected_behavior.
+A successful API call does not mean the response passed the test.
 
-- pass
-  The output satisfies the expected behavior without meaningful factual,
-  policy, instruction, or formatting errors.
-
-- partial
-  The output is substantially correct but misses or slightly violates
-  part of the expected behavior.
-
-- fail
-  The output contains an important factual error, hallucination,
+For every model, evaluate every test case individually and assign
+exactly one verdict:
+- pass: the output satisfies the expected behavior without meaningful
+  factual, policy, instruction, or formatting errors.
+- partial: the output is substantially correct but misses or slightly
+  violates part of the expected behavior.
+- fail: the output contains an important factual error, hallucination,
   policy violation, formatting failure, instruction failure,
   or execution error.
 
-Do not mark a test case as pass merely because the API execution succeeded.
+Each model_rankings item must include test_case_assessments,
+with one item per test case: test_case_id, criterion, verdict
+(pass, partial, or fail), and reason.
+Also give passed_tests, partial_tests, and failed_tests for each model.
 
-A successful API request and a successful benchmark result are different.
-
-For every candidate model, create a test_case_assessments list.
-
-Each test_case_assessments item must include:
-- test_case_id
-- criterion
-- verdict
-- reason
-
-Also calculate for every model:
-- passed_tests
-- partial_tests
-- failed_tests
-
-For each model, evaluate:
-- How well the model output matches the expected_behavior
-- How accurately the model follows the provided facts and policies
-- How well the model follows explicit instructions
-- How well the model follows formatting requirements
-- Average response latency
-- Total API cost
-- Any execution errors
-
-Do not rely on model reputation, provider reputation, or outside knowledge.
-
-Judge only from the benchmark results produced by ModelRank.
-
-For response quality, compare each model output directly against
-the corresponding expected_behavior.
-
-Do not introduce requirements that do not exist in expected_behavior.
-
-Do not forgive hallucinated facts simply because the rest of
-the response is correct.
-
-Consider both response quality and runtime performance.
-
-Prioritize correctness and instruction following over small differences
-in latency or cost.
-
-If two models have similar response quality, prefer the model with
-lower latency and lower API cost.
+Prioritize response correctness and instruction following.
+When quality is similar, prefer lower latency and cost.
 
 Rank all candidate models from best to worst.
 
-Select exactly one best model when at least one candidate performs
-well enough for the project.
+Select the best-performing model if at least one candidate
+meets the project's important requirements.
 
-Set retry_required to true only if all candidate models perform poorly,
-fail important benchmark requirements, or are not suitable for the project.
+Set retry_required to true only when all candidates
+perform poorly or fail important requirements.
 
 If retry_required is true:
-- Explain clearly why the current models are insufficient
-- Set selected_model to null
+- Do not recommend a selected model.
+- Explain why the candidates are insufficient.
 
 If retry_required is false:
-- Select the best-performing model
-- Explain the decision using benchmark evidence
-- Avoid absolute claims such as "perfect", "flawless", or "fully correct"
-  unless directly and objectively verified
-- Prefer evidence-based wording such as:
-  "best overall compliance"
-  "strongest benchmark performance"
-  "highest observed compliance"
+- Select one best-performing model.
+- Explain the choice using benchmark evidence.
 
-Do not modify benchmark results.
-Do not rerun models.
-Do not create new test cases.
-Do not search for new models.
+Keep decision_reason concise and evidence-based.
+Avoid unsupported claims of perfect or flawless performance.
 
-After evaluating the results, always use the save_final_decision tool.
+Do not modify results, rerun models, create test cases,
+or search for new models.
 
-The selected_model must include:
-- name
-- provider
-- model_id
+Call save_final_decision to save final_decision.json.
 
-Each item in model_rankings must include:
-- rank
-- name
-- provider
-- model_id
-- quality_assessment
-- test_case_assessments
-- passed_tests
-- partial_tests
-- failed_tests
-- average_latency_seconds
-- total_cost_usd
-- reason
-
-Keep decision_reason concise and based only on benchmark evidence.
-
-After saving the decision, respond with exactly:
+After saving, respond with exactly:
 "Final decision saved to final_decision.json"
 
-Do not summarize the decision in the assistant message.
-Do not ask questions.
-Do not suggest or perform any next steps.
+Do not summarize results, ask questions,
+or suggest additional steps.
 """
 
 
