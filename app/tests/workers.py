@@ -7,6 +7,7 @@ functions.
 import json
 import time
 from pathlib import Path
+from unittest import mock
 
 from backend import jobs
 
@@ -47,6 +48,27 @@ TEST_CASES = [
 ]
 
 
+class FakeCompletion:
+    """Stands in for an OpenRouter chat completion response."""
+
+    def __init__(self, content: str = "Test output"):
+        self.content = content
+
+    def raise_for_status(self) -> None:
+        pass
+
+    def json(self) -> dict:
+        return {
+            "choices": [{"message": {"content": self.content}}],
+            "usage": {
+                "prompt_tokens": 10,
+                "completion_tokens": 20,
+                "total_tokens": 30,
+                "cost": 0.001,
+            },
+        }
+
+
 def isolated_agents_worker(job_dir_path: str, user_request: str) -> None:
     """Drive the real agents' file tools inside the job's directory.
 
@@ -81,32 +103,15 @@ def isolated_agents_worker(job_dir_path: str, user_request: str) -> None:
     inputs = json.loads(runner.load_runner_inputs.invoke({}))
     assert inputs["benchmark"]["project_name"] == user_request, inputs
 
+    with mock.patch.object(
+        runner.requests, "post", return_value=FakeCompletion()
+    ):
+        runner.run_models_parallel.invoke({})
+
     # Give a concurrent job time to write its own files in between
     time.sleep(1.5)
 
-    runner.save_runner_results.invoke({
-        "results_json": json.dumps({
-            "project_name": user_request,
-            "models": [{
-                **MODEL,
-                "results": [
-                    {
-                        "test_case_id": case["id"],
-                        "criterion": case["criterion"],
-                        "expected_behavior": case["expected_behavior"],
-                        "output": "Test output",
-                        "latency_seconds": 1.0,
-                        "input_tokens": 10,
-                        "output_tokens": 20,
-                        "total_tokens": 30,
-                        "cost_usd": 0.001,
-                        "error": None,
-                    }
-                    for case in TEST_CASES
-                ],
-            }],
-        }),
-    })
+    runner.save_runner_results.invoke({})
     jobs._update_status(job_dir, last_completed_step="runner")
 
     results = json.loads(judge.load_runner_results.invoke({}))

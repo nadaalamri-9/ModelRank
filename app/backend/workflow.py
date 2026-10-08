@@ -9,7 +9,7 @@ from langgraph.graph import StateGraph, END
 
 from backend.agents.planner import planner_agent
 from backend.agents.benchmark import benchmark_agent
-from backend.agents.runner import runner_agent
+from backend.agents.runner import RAW_RESULTS_FILE, runner_agent
 from backend.agents.judge import judge_agent
 from backend.schemas import (
     BenchmarkDocument,
@@ -107,6 +107,8 @@ def runner_node(state: ModelRankState):
     # Remove previous results before execution
     if runner_results_path.exists():
         runner_results_path.unlink()
+
+    (DATA_DIR / RAW_RESULTS_FILE).unlink(missing_ok=True)
 
     runner_agent.invoke(
         {

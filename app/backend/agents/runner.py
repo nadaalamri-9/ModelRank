@@ -20,11 +20,14 @@ from backend.schemas import BenchmarkDocument, EvaluationPlan, RunnerResults
 DATA_DIR = Path(__file__).resolve().parents[1] / "data"
 DATA_DIR.mkdir(exist_ok=True)
 
+# Raw results handed from run_models_parallel to save_runner_results.
+# They stay on disk instead of passing through the model: an LLM copying
+# the full results into a tool argument truncates or alters them, the
+# validation error goes back to the model, and nothing is saved.
+RAW_RESULTS_FILE = "runner_raw_results.json"
 
-@tool
-def load_runner_inputs() -> str:
-    """Load and validate the evaluation plan and benchmark."""
 
+def _read_runner_inputs() -> dict:
     with open(DATA_DIR / "evaluation_plan.json", "r", encoding="utf-8") as file:
         plan = json.load(file)
 
@@ -34,27 +37,27 @@ def load_runner_inputs() -> str:
     plan = EvaluationPlan.model_validate(plan).model_dump()
     benchmark = BenchmarkDocument.model_validate(benchmark).model_dump()
 
-    inputs = {
+    return {
         "evaluation_plan": plan,
         "benchmark": benchmark
     }
 
-    return json.dumps(inputs, ensure_ascii=False)
+
+@tool
+def load_runner_inputs() -> str:
+    """Load and validate the evaluation plan and benchmark."""
+
+    return json.dumps(_read_runner_inputs(), ensure_ascii=False)
 
 
 @tool
-def run_models_parallel(runner_inputs: str) -> str:
-    """Run all candidate models on the same benchmark in parallel."""
+def run_models_parallel() -> str:
+    """Run all candidate models on the saved benchmark in parallel."""
 
-    inputs = json.loads(runner_inputs)
+    inputs = _read_runner_inputs()
 
-    plan = EvaluationPlan.model_validate(
-        inputs["evaluation_plan"]
-    ).model_dump()
-
-    benchmark = BenchmarkDocument.model_validate(
-        inputs["benchmark"]
-    ).model_dump()
+    plan = inputs["evaluation_plan"]
+    benchmark = inputs["benchmark"]
 
     candidate_models = plan["candidate_models"]
     test_cases = benchmark["test_cases"]
@@ -170,16 +173,25 @@ def run_models_parallel(runner_inputs: str) -> str:
 
     validated_results = RunnerResults.model_validate(results)
 
-    return validated_results.model_dump_json()
+    with open(DATA_DIR / RAW_RESULTS_FILE, "w", encoding="utf-8") as file:
+        file.write(validated_results.model_dump_json())
+
+    return (
+        f"Ran {len(candidate_models)} models on {len(test_cases)} test cases. "
+        "Results are ready for save_runner_results."
+    )
 
 
 @tool
-def save_runner_results(results_json: str) -> str:
+def save_runner_results() -> str:
     """Calculate model summaries and save validated runner results."""
 
-    runner_results = RunnerResults.model_validate_json(
-        results_json
-    ).model_dump()
+    raw_results_path = DATA_DIR / RAW_RESULTS_FILE
+
+    with open(raw_results_path, "r", encoding="utf-8") as file:
+        runner_results = RunnerResults.model_validate_json(
+            file.read()
+        ).model_dump()
 
     for model in runner_results["models"]:
 
@@ -243,6 +255,8 @@ def save_runner_results(results_json: str) -> str:
             ensure_ascii=False
         )
 
+    raw_results_path.unlink()
+
     return "Runner results saved to runner_results.json"
 
 
@@ -260,7 +274,8 @@ Always follow this tool order:
 2. run_models_parallel
 3. save_runner_results
 
-Pass the output of each tool directly to the next tool.
+Each tool reads what the previous tool saved,
+so call them in order without passing results between them.
 
 Use the same benchmark for every candidate model.
 Models must be executed in parallel.
