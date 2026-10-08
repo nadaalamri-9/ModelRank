@@ -51,6 +51,24 @@ FAILED = "failed"
 
 # Files
 
+FILE_RETRY_ATTEMPTS = 20
+FILE_RETRY_SECONDS = 0.05
+
+
+def _retry_while_locked(action):
+    # On Windows, reading a file while another process replaces it (or
+    # replacing it while it is being read) briefly fails with
+    # PermissionError. Linux renames are atomic, so this never retries there.
+    for attempt in range(FILE_RETRY_ATTEMPTS):
+        try:
+            return action()
+        except PermissionError:
+            if attempt == FILE_RETRY_ATTEMPTS - 1:
+                raise
+
+            time.sleep(FILE_RETRY_SECONDS)
+
+
 def _write_json(path: Path, data: dict) -> None:
     # Write then rename, so a reader never sees a half-written file
     temp_path = path.with_name(f"{path.name}.{os.getpid()}.tmp")
@@ -58,12 +76,15 @@ def _write_json(path: Path, data: dict) -> None:
     with open(temp_path, "w", encoding="utf-8") as file:
         json.dump(data, file, indent=2, ensure_ascii=False)
 
-    os.replace(temp_path, path)
+    _retry_while_locked(lambda: os.replace(temp_path, path))
 
 
 def _read_json(path: Path) -> dict:
-    with open(path, "r", encoding="utf-8") as file:
-        return json.load(file)
+    def read():
+        with open(path, "r", encoding="utf-8") as file:
+            return json.load(file)
+
+    return _retry_while_locked(read)
 
 
 def _update_status(job_dir: Path, **changes) -> None:

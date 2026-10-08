@@ -50,6 +50,10 @@ Evaluates each response as `PASS`, `PARTIAL`, or `FAIL`, then ranks the models b
   <img src="./frontend/public/modelrank-workflow.svg" alt="ModelRank LangGraph workflow" width="900">
 </p>
 
+### Background Evaluations
+
+An evaluation can take several minutes, so it runs as a background job. The frontend starts the job and polls the API until the ranking is ready. Each job runs in its own process and working directory, so concurrent evaluations never share files, and each PDF report is built from its own evaluation's results.
+
 ---
 
 ## Agent Notebook
@@ -98,26 +102,37 @@ The production implementation is organized separately inside the `backend/` dire
 ModelRank/
 ├── backend/
 │   ├── agents/
-│   ├── data/
 │   ├── __init__.py
 │   ├── config.py
 │   ├── Dockerfile
+│   ├── jobs.py
 │   ├── main.py
 │   ├── report.py
 │   └── workflow.py
 │
 ├── frontend/
+│   ├── links/
 │   ├── public/
 │   ├── src/
+│   │   ├── assets/
+│   │   ├── components/
+│   │   └── pages/
+│   ├── .env.example
 │   ├── Dockerfile
 │   ├── index.html
 │   ├── package.json
 │   ├── package-lock.json
 │   └── vite.config.js
 │
+├── deploy/
+│   └── elastic-beanstalk/
+│
+├── tests/
+│
 ├── .dockerignore
 ├── .env.example
 ├── .gitignore
+├── amplify.yml
 ├── docker-compose.yml
 ├── ModelRank_Agents.ipynb
 ├── README.md
@@ -166,6 +181,15 @@ API documentation:
 
 ```text
 http://localhost:8000/docs
+```
+
+### 4. Run the tests
+
+The backend tests make no model or network calls:
+
+```bash
+pip install -r requirements.txt
+python -m unittest discover -s tests -t .
 ```
 
 ---

@@ -47,8 +47,8 @@
 }
 
 .links-logo {
-  width: clamp(4rem, 9vw, 4.75rem);
-  height: clamp(4rem, 9vw, 4.75rem);
+  width: 100%;
+  height: 100%;
 
   object-fit: contain;
 

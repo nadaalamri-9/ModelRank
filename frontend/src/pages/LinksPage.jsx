@@ -9,10 +9,10 @@ import "./LinksPage.css";
 
 /* Placeholders start with "#TODO": replace them with the real URLs */
 const LINKS = {
-  app: "/",
+  app: "https://main.d315adazaocnwp.amplifyapp.com",
   demoVideo: "#TODO-demo-video-url",
   repository: "https://github.com/nadaalamri-9/ModelRank",
-  linkedin: "#TODO-linkedin-profile-url",
+  linkedin: "https://www.linkedin.com/in/nada-alamri9",
   github: "https://github.com/nadaalamri-9",
 };
 

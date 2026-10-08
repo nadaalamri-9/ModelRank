@@ -57,3 +57,9 @@ deploy/elastic-beanstalk/build/
 
 # Evaluation job directories
 backend/data/jobs/
+
+# Local-only documents
+DEPLOYMENT.md
+
+# Downloaded reports
+*.pdf
