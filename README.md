@@ -2,155 +2,85 @@
 
 **Find the model worth building on.**
 
-ModelRank is a multi-agent LLM evaluation system that benchmarks candidate language models against project-specific requirements and ranks the strongest fit based on quality, latency, and cost.
+ModelRank is a multi-agent LLM evaluation system that benchmarks language models against project-specific requirements and identifies the best fit based on quality, latency, and cost.
 
 **Developed by Nada Alamri**  
 As part of the **Advanced Agentic AI Systems Engineering Program**  
 by [**SDAIA Academy**](https://github.com/SDAIAAcademy)
 
+### Explore ModelRank
+
+**[Live Application](https://main.d315adazaocnwp.amplifyapp.com)** · **[Links Page](https://main.d315adazaocnwp.amplifyapp.com/links/)**
+
+### Agent Notebook
+
+**[View ModelRank Agents Notebook](./ModelRank_Agents.ipynb)**
+
+Want to explore the agents without navigating the full application?
+
+The notebook provides a standalone, simplified implementation of the agents, tools, prompts, and LangGraph orchestration in one place.
+
 ---
 
 ## Overview
 
-Choosing the right language model depends on the requirements of the project.
+ModelRank takes a project description and automatically:
 
-ModelRank automates this process through a multi-agent workflow that:
+1. Analyzes requirements and identifies evaluation criteria.
+2. Discovers suitable language models.
+3. Generates project-specific benchmark test cases.
+4. Executes the same benchmark across candidate models.
+5. Evaluates responses and compares quality, latency, and cost.
+6. Ranks the models and recommends the strongest fit.
 
-- understands the user's project
-- identifies relevant evaluation criteria
-- selects suitable candidate models
-- generates a focused benchmark
-- evaluates models under the same conditions
-- compares quality, latency, and API cost
-- ranks the models and selects the best match
+## Multi-Agent Architecture
 
----
+ModelRank uses four specialized agents orchestrated with **LangGraph**.
 
-## How It Works
+| Agent | Responsibility |
+|---|---|
+| **Planner** | Analyzes requirements, researches models, and defines evaluation criteria |
+| **Benchmark** | Generates targeted test cases |
+| **Runner** | Executes models and captures responses, latency, token usage, and cost |
+| **Judge** | Assesses responses and ranks models based on benchmark performance |
 
-ModelRank uses four specialized agents:
-
-### Planner Agent
-
-Analyzes the project requirements, identifies evaluation criteria, searches for suitable models, and verifies their OpenRouter model IDs.
-
-### Benchmark Agent
-
-Creates focused, self-contained test cases based on the project's evaluation criteria.
-
-### Runner Agent
-
-Runs candidate models against the same benchmark in parallel and records responses, latency, token usage, cost, and execution errors.
-
-### Judge Agent
-
-Evaluates each response as `PASS`, `PARTIAL`, or `FAIL`, then ranks the models based primarily on benchmark quality, with latency and cost used as additional comparison factors.
-
-<p align="center">
-  <img src="./frontend/public/modelrank-workflow.svg" alt="ModelRank LangGraph workflow" width="900">
-</p>
+![ModelRank LangGraph Workflow](./frontend/public/modelrank-workflow.svg)
 
 ### Background Evaluations
 
-An evaluation can take several minutes, so it runs as a background job. The frontend starts the job and polls the API until the ranking is ready. Each job runs in its own process and working directory, so concurrent evaluations never share files, and each PDF report is built from its own evaluation's results.
-
----
-
-## Agent Notebook
-
-For a simplified view of the complete agent workflow without the full backend and frontend implementation, see:
-
-[`ModelRank_Agents.ipynb`](./ModelRank_Agents.ipynb)
-
-The notebook contains the core agents, tools, prompts, and LangGraph orchestration in one place.
-
-The production implementation is organized separately inside the `backend/` directory.
-
----
+Evaluations run as isolated background jobs, allowing the frontend to track progress without blocking requests. Each evaluation maintains its own results and PDF report.
 
 ## Tech Stack
 
-### AI & Orchestration
-
-- LangChain
-- LangGraph
-- OpenRouter
-- Tavily
-
-### Backend
-
-- Python
-- FastAPI
-- ReportLab
-
-### Frontend
-
-- React
-- Vite
-- JavaScript
-
-### Deployment
-
-- Docker
-- Docker Compose
-
----
+| Layer | Technologies |
+|---|---|
+| AI & Orchestration | LangChain, LangGraph, OpenRouter, Tavily |
+| Backend | Python, FastAPI, ReportLab |
+| Frontend | React, Vite, JavaScript |
+| Deployment | Docker, AWS Elastic Beanstalk, CloudFront, AWS Amplify |
 
 ## Project Structure
 
 ```text
 ModelRank/
-├── backend/
-│   ├── agents/
-│   ├── __init__.py
-│   ├── config.py
-│   ├── Dockerfile
-│   ├── jobs.py
-│   ├── main.py
-│   ├── report.py
-│   └── workflow.py
-│
-├── frontend/
-│   ├── links/
-│   ├── public/
-│   ├── src/
-│   │   ├── assets/
-│   │   ├── components/
-│   │   └── pages/
-│   ├── .env.example
-│   ├── Dockerfile
-│   ├── index.html
-│   ├── package.json
-│   ├── package-lock.json
-│   └── vite.config.js
-│
-├── deploy/
-│   └── elastic-beanstalk/
-│
-├── tests/
-│
-├── .dockerignore
-├── .env.example
-├── .gitignore
+├── backend/                  # API, agents, workflow, jobs, reports
+├── frontend/                 # React application and Links page
+├── tests/                    # Automated backend tests
+├── deploy/elastic-beanstalk/ # AWS deployment tooling
+├── ModelRank_Agents.ipynb    # Standalone agent notebook
+├── requirements.txt
 ├── amplify.yml
-├── docker-compose.yml
-├── ModelRank_Agents.ipynb
-├── README.md
-└── requirements.txt
+└── README.md
 ```
 
----
+## Local Setup
 
-## Setup
-
-### 1. Clone the repository
+Clone the repository:
 
 ```bash
 git clone https://github.com/nadaalamri-9/ModelRank.git
 cd ModelRank
 ```
-
-### 2. Configure environment variables
 
 Create a `.env` file in the project root:
 
@@ -159,52 +89,26 @@ OPENROUTER_API_KEY=your_openrouter_api_key
 TAVILY_API_KEY=your_tavily_api_key
 ```
 
-### 3. Run with Docker
+Run the application:
 
 ```bash
 docker compose up --build
 ```
 
-Frontend:
+- Frontend: http://localhost:5173
+- Backend: http://localhost:8000
+- API documentation: http://localhost:8000/docs
 
-```text
-http://localhost:5173
-```
-
-Backend:
-
-```text
-http://localhost:8000
-```
-
-API documentation:
-
-```text
-http://localhost:8000/docs
-```
-
-### 4. Run the tests
-
-The backend tests make no model or network calls:
+Run backend tests:
 
 ```bash
 pip install -r requirements.txt
 python -m unittest discover -s tests -t .
 ```
 
----
+## Evaluation Results
 
-## Output
-
-ModelRank provides:
-
-- selected best-match model
-- ranked candidate models
-- PASS / PARTIAL / FAIL results
-- average latency
-- API cost
-- detailed test-case assessments
-- downloadable PDF evaluation report
+ModelRank provides ranked model recommendations, benchmark assessments (`PASS`, `PARTIAL`, `FAIL`), latency and cost comparisons, and a downloadable PDF evaluation report.
 
 ---
 
