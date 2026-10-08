@@ -15,11 +15,11 @@ env/
 ENV/
 
 # Generated ModelRank evaluation data
-backend/data/*.json
+app/backend/data/*.json
 
 # Frontend dependencies and build
-frontend/node_modules/
-frontend/dist/
+app/frontend/node_modules/
+app/frontend/dist/
 
 # Logs
 *.log
@@ -53,10 +53,10 @@ htmlcov/
 # Docker
 *.pid
 # Elastic Beanstalk source bundle
-deploy/elastic-beanstalk/build/
+app/deploy/elastic-beanstalk/build/
 
 # Evaluation job directories
-backend/data/jobs/
+app/backend/data/jobs/
 
 # Local-only documents
 DEPLOYMENT.md

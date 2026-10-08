@@ -1,6 +1,6 @@
 """Tests for the FastAPI endpoints. No model or network calls.
 
-Run from the repository root:
+Run from the app/ directory:
 
     python -m unittest discover -s tests -t .
 """

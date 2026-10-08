@@ -1,6 +1,6 @@
 """Build the Elastic Beanstalk source bundle for the ModelRank backend.
 
-Usage (from the repository root):
+Usage (from the app/ directory):
 
     python deploy/elastic-beanstalk/package.py
 

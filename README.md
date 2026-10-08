@@ -44,7 +44,7 @@ ModelRank uses four specialized agents orchestrated with **LangGraph**.
 | **Runner** | Executes models and captures responses, latency, token usage, and cost |
 | **Judge** | Assesses responses and ranks models based on benchmark performance |
 
-![ModelRank LangGraph Workflow](./frontend/public/modelrank-workflow.svg)
+![ModelRank LangGraph Workflow](./app/frontend/public/modelrank-workflow.svg)
 
 ### Background Evaluations
 
@@ -63,13 +63,15 @@ Evaluations run as isolated background jobs, allowing the frontend to track prog
 
 ```text
 ModelRank/
-├── backend/                  # API, agents, workflow, jobs, reports
-├── frontend/                 # React application and Links page
-├── tests/                    # Automated backend tests
-├── deploy/elastic-beanstalk/ # AWS deployment tooling
-├── ModelRank_Agents.ipynb    # Standalone agent notebook
-├── requirements.txt
-├── amplify.yml
+├── app/
+│   ├── backend/                  # API, agents, workflow, jobs, reports
+│   ├── frontend/                 # React application and Links page
+│   ├── tests/                    # Automated backend tests
+│   ├── deploy/elastic-beanstalk/ # AWS deployment tooling
+│   ├── docker-compose.yml
+│   └── requirements.txt
+├── ModelRank_Agents.ipynb        # Standalone agent notebook
+├── amplify.yml                   # AWS Amplify build settings
 └── README.md
 ```
 
@@ -79,10 +81,10 @@ Clone the repository:
 
 ```bash
 git clone https://github.com/nadaalamri-9/ModelRank.git
-cd ModelRank
+cd ModelRank/app
 ```
 
-Create a `.env` file in the project root:
+Create a `.env` file in the `app/` directory:
 
 ```env
 OPENROUTER_API_KEY=your_openrouter_api_key
@@ -99,7 +101,7 @@ docker compose up --build
 - Backend: http://localhost:8000
 - API documentation: http://localhost:8000/docs
 
-Run backend tests:
+Run backend tests from the `app/` directory:
 
 ```bash
 pip install -r requirements.txt
