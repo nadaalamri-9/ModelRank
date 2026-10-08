@@ -1,15 +1,26 @@
 # ModelRank - FastAPI Backend
 
-import json
-from pathlib import Path
+import logging
+import os
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from backend.workflow import model_rank_graph
+from backend.jobs import (
+    FAILED,
+    JobManager,
+    JobNotFinished,
+    JobNotFound,
+)
 from backend.report import generate_pdf_report
+
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
 
 
 app = FastAPI(
@@ -19,28 +30,51 @@ app = FastAPI(
 
 
 # CORS
+# Production sets CORS_ORIGINS (comma-separated, e.g. the Amplify domain);
+# without it, only the local frontend is allowed.
+
+DEFAULT_CORS_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
+CORS_ORIGINS = [
+    origin.strip().rstrip("/")
+    for origin in os.getenv("CORS_ORIGINS", "").split(",")
+    if origin.strip()
+] or DEFAULT_CORS_ORIGINS
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-    ],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
-# Paths
+# Evaluation Jobs
+# Each evaluation runs in its own process and data directory (backend/jobs.py)
 
-DATA_DIR = Path(__file__).resolve().parent / "data"
+jobs = JobManager()
 
 
-# Request Schema
+# Request Schemas
 
 class EvaluationRequest(BaseModel):
     user_request: str
+
+
+class ReportRequest(BaseModel):
+    job_id: str
+    user_request: str | None = None
+
+
+def _get_job(job_id: str) -> dict:
+    try:
+        return jobs.get(job_id)
+    except JobNotFound:
+        raise HTTPException(status_code=404, detail="Evaluation not found.")
 
 
 # Health Check
@@ -52,48 +86,35 @@ def root():
     }
 
 
-# Evaluate Models
+# Evaluate Models (background job)
+# Start with POST /evaluate/jobs, then poll GET /evaluate/jobs/{job_id}
+# until status is "done" (with "result") or "failed".
+
+@app.post("/evaluate/jobs", status_code=202)
+def start_evaluation(request: EvaluationRequest):
+    job_id = jobs.submit(request.user_request)
+
+    return _get_job(job_id)
+
+
+@app.get("/evaluate/jobs/{job_id}")
+def get_evaluation(job_id: str):
+    return _get_job(job_id)
+
+
+# Evaluate Models (waits for the result)
+# Kept for direct API use; behind a proxy, prefer the job endpoints.
 
 @app.post("/evaluate")
 def evaluate(request: EvaluationRequest):
+    job = jobs.wait(jobs.submit(request.user_request))
 
-    initial_state = {
-        "user_request": request.user_request,
-        "retry_count": 0,
-        "retry_required": False,
-        "selected_model": None,
-    }
-
-    final_state = model_rank_graph.invoke(
-        initial_state
-    )
-
-    final_decision_path = DATA_DIR / "final_decision.json"
-
-    with open(
-        final_decision_path,
-        "r",
-        encoding="utf-8",
-    ) as file:
-        final_decision = json.load(file)
+    if job["status"] == FAILED:
+        raise HTTPException(status_code=500, detail=job["error"])
 
     return {
-        "user_request": final_state["user_request"],
-        "retry_count": final_state["retry_count"],
-        "retry_required": final_state["retry_required"],
-        "selected_model": final_state["selected_model"],
-        "model_rankings": final_decision.get(
-            "model_rankings",
-            [],
-        ),
-        "decision_reason": final_decision.get(
-            "decision_reason",
-            "",
-        ),
-        "retry_reason": final_decision.get(
-            "retry_reason",
-            "",
-        ),
+        **job["result"],
+        "job_id": job["job_id"],
     }
 
 
@@ -101,20 +122,21 @@ def evaluate(request: EvaluationRequest):
 
 @app.post("/report/pdf")
 def download_pdf_report(
-    request: EvaluationRequest,
+    request: ReportRequest,
 ):
 
-    final_decision_path = DATA_DIR / "final_decision.json"
-
-    with open(
-        final_decision_path,
-        "r",
-        encoding="utf-8",
-    ) as file:
-        final_decision = json.load(file)
+    try:
+        user_request, final_decision = jobs.final_decision(request.job_id)
+    except JobNotFound:
+        raise HTTPException(status_code=404, detail="Evaluation not found.")
+    except JobNotFinished:
+        raise HTTPException(
+            status_code=409,
+            detail="This evaluation has no finished result.",
+        )
 
     pdf_buffer = generate_pdf_report(
-        user_request=request.user_request,
+        user_request=user_request,
         final_decision=final_decision,
     )
 

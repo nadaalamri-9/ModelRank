@@ -44,3 +44,5 @@ Thumbs.db
 
 # Misc
 *.pdf
+# Evaluation job directories
+backend/data/jobs/

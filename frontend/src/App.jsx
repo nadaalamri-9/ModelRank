@@ -9,11 +9,66 @@ import Footer from "./components/Footer";
 
 import "./App.css";
 
+// Set VITE_API_URL for production builds; local development keeps the default
+const API_URL = (
+  import.meta.env.VITE_API_URL || "http://127.0.0.1:8000"
+).replace(/\/+$/, "");
+
+// Evaluations run as background jobs on the backend; poll until done
+const POLL_INTERVAL_MS = 3000;
+const MAX_POLL_FAILURES = 5;
+
+const wait = (ms) =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
+async function waitForEvaluation(jobId) {
+  let failures = 0;
+
+  for (;;) {
+    await wait(POLL_INTERVAL_MS);
+
+    let response;
+
+    try {
+      response = await fetch(
+        `${API_URL}/evaluate/jobs/${jobId}`,
+        { cache: "no-store" }
+      );
+    } catch {
+      // Brief network hiccups should not end a long evaluation
+      failures += 1;
+
+      if (failures >= MAX_POLL_FAILURES) {
+        throw new Error("Failed to evaluate the project.");
+      }
+
+      continue;
+    }
+
+    if (!response.ok) {
+      throw new Error("Failed to evaluate the project.");
+    }
+
+    failures = 0;
+
+    const job = await response.json();
+
+    if (job.status === "done") {
+      return job.result;
+    }
+
+    if (job.status === "failed") {
+      throw new Error("Failed to evaluate the project.");
+    }
+  }
+}
+
 function App() {
   const [projectDescription, setProjectDescription] = useState("");
   const [status, setStatus] = useState("idle");
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
+  const [jobId, setJobId] = useState(null);
 
   const [downloadingPdf, setDownloadingPdf] = useState(false);
 
@@ -27,7 +82,7 @@ function App() {
 
     try {
       const response = await fetch(
-        "http://127.0.0.1:8000/evaluate",
+        `${API_URL}/evaluate/jobs`,
         {
           method: "POST",
           headers: {
@@ -43,8 +98,10 @@ function App() {
         throw new Error("Failed to evaluate the project.");
       }
 
-      const data = await response.json();
+      const job = await response.json();
+      const data = await waitForEvaluation(job.job_id);
 
+      setJobId(job.job_id);
       setResult(data);
       setStatus("done");
     } catch (err) {
@@ -57,7 +114,7 @@ function App() {
   };
 
   const handleDownloadPdf = async () => {
-    if (!projectDescription.trim()) {
+    if (!jobId) {
       return;
     }
 
@@ -66,13 +123,14 @@ function App() {
 
     try {
       const response = await fetch(
-        "http://127.0.0.1:8000/report/pdf",
+        `${API_URL}/report/pdf`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
+            job_id: jobId,
             user_request: projectDescription,
           }),
         }
@@ -107,6 +165,7 @@ function App() {
 
   const handleNewAnalysis = () => {
     setProjectDescription("");
+    setJobId(null);
     setResult(null);
     setError("");
     setStatus("idle");

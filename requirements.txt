@@ -1,9 +1,19 @@
-fastapi
-uvicorn[standard]
-python-dotenv
-requests
-langchain
-langchain-openai
-langchain-tavily
-langgraph
-reportlab
+# Pinned to the versions ModelRank was verified with
+
+fastapi==0.115.12
+uvicorn[standard]==0.34.2
+python-dotenv==1.2.1
+requests==2.34.2
+langchain==1.4.3
+langchain-openai==1.6.7
+langchain-tavily==0.2.18
+langgraph==1.2.14
+reportlab==5.0.1
+
+# Key transitive dependencies
+langchain-core==1.6.7
+langgraph-prebuilt==1.1.0
+langgraph-checkpoint==4.2.0
+openai==3.14.1
+pydantic==2.11.4
+starlette==0.46.2

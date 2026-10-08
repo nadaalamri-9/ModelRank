@@ -52,3 +52,8 @@ htmlcov/
 
 # Docker
 *.pid
+# Elastic Beanstalk source bundle
+deploy/elastic-beanstalk/build/
+
+# Evaluation job directories
+backend/data/jobs/
