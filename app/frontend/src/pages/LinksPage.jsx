@@ -10,7 +10,7 @@ import "./LinksPage.css";
 /* Placeholders start with "#TODO": replace them with the real URLs */
 const LINKS = {
   app: "https://main.d315adazaocnwp.amplifyapp.com",
-  demoVideo: "#TODO-demo-video-url",
+  demoVideo: "https://drive.google.com/file/d/14_Me161I6Iil_kK6RI2FcVP5wsAzTBui/view?usp=sharing",
   repository: "https://github.com/nadaalamri-9/ModelRank",
   linkedin: "https://www.linkedin.com/in/nada-alamri9",
   github: "https://github.com/nadaalamri-9",
